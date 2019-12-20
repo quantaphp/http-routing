@@ -1,0 +1,42 @@
+{
+    "name": "quanta/http-routing",
+    "type": "library",
+    "description": "Psr-15 routing middleware",
+    "keywords": [
+        "psr-15",
+        "router",
+        "routing",
+        "middleware"
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/quantaphp/http-routing",
+    "support": {
+        "issues": "https://github.com/quantaphp/http-routing/issues",
+        "source": "https://github.com/quantaphp/http-routing"
+    },
+    "authors": [
+        {
+            "name": "pmall",
+            "email": "pierre.mallinjoud@gmail.com"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "require": {
+        "php": "7.4.0",
+        "psr/http-message": "^1.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0"
+    },
+    "require-dev": {
+        "eloquent/phony-kahlan": "^2.0",
+        "kahlan/kahlan": "^4.5",
+        "phpstan/phpstan": "^0.12.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Quanta\\Http\\": "src"
+        }
+    }
+}
