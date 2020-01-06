@@ -8,30 +8,48 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 
 final class MatchedRouteMiddleware implements MiddlewareInterface
 {
+    /**
+     * @var \Psr\Http\Message\ResponseFactoryInterface
+     */
+    private ResponseFactoryInterface $factory;
+
+    /**
+     * @param \Psr\Http\Message\ResponseFactoryInterface $factory
+     */
+    public function __construct(ResponseFactoryInterface $factory)
+    {
+        $this->factory = $factory;
+    }
+
     /**
      * @inheritdoc
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $matched = $request->getAttribute(RequestHandlerInterface::class, false);
+        $result = $request->getAttribute(RoutingResult::class);
 
-        if ($matched === false) {
-            return $handler->handle($request);
+        if (! $result instanceof RoutingResult) {
+            throw new \UnexpectedValueException(
+                vsprintf('Request attribute \'%s\' must be an implementation of %s, %s given', [
+                    RoutingResult::class,
+                    RoutingResult::class,
+                    gettype($result),
+                ])
+            );
         }
 
-        if ($matched instanceof RequestHandlerInterface) {
-            return $matched->handle($request);
+        if ($result->isNotFound()) {
+            return $this->factory->createResponse(404);
         }
 
-        throw new \UnexpectedValueException(
-            vsprintf('Request attribute \'%s\' must be an implementation of %s, %s given', [
-                RequestHandlerInterface::class,
-                RequestHandlerInterface::class,
-                gettype($matched),
-            ])
-        );
+        if ($result->isNotAllowed()) {
+            return $this->factory->createResponse(405)->withHeader('Allow', implode(', ', $result->allowed()));
+        }
+
+        return $result->handle($request);
     }
 }

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Quanta\Http;
 
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-final class RoutingResult
+final class RoutingResult implements RequestHandlerInterface
 {
     /**
      * @var int
@@ -106,20 +107,7 @@ final class RoutingResult
      */
     public function allowed(): array
     {
-        return $this->allowed();
-    }
-
-    /**
-     * @return \Psr\Http\Server\RequestHandlerInterface
-     * @throws \Exception
-     */
-    public function handler(): RequestHandlerInterface
-    {
-        if (! is_null($this->handler)) {
-            return $this->handler;
-        }
-
-        throw new \Exception();
+        return $this->allowed;
     }
 
     /**
@@ -128,5 +116,21 @@ final class RoutingResult
     public function attributes(): array
     {
         return $this->attributes;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        if (is_null($this->handler)) {
+            throw new \LogicException;
+        }
+
+        foreach ($this->attributes as $name => $attribute) {
+            $request = $request->withAttribute($name, $attribute);
+        }
+
+        return $this->handler->handle($request);
     }
 }
