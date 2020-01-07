@@ -100,6 +100,6 @@ final class RoutingResult implements MiddlewareInterface
             $request = $request->withAttribute($name, $attribute);
         }
 
-        return $this->handler->handle($request);
+        return $handler->handle($request);
     }
 }

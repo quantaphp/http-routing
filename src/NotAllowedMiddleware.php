@@ -33,7 +33,7 @@ final class NotAllowedMiddleware implements MiddlewareInterface
         $failure = $request->getAttribute(RoutingFailure::class);
 
         return $failure instanceof RoutingFailure && $failure->hasAllowedMethods()
-            ? $this->factory->createResponse(405)->withHeader('Allow', $failure->allowedMethods())
+            ? $this->factory->createResponse(405)->withHeader('Allow', $failure->allowedHeaderValue())
             : $handler->handle($request);
     }
 }

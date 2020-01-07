@@ -28,9 +28,9 @@ final class RoutingFailure
     }
 
     /**
-     * @return array<int, string>
+     * @return string
      */
-    public function allowedHeader(string $spacer = ', '): string
+    public function allowedHeaderValue(string $spacer = ', '): string
     {
         return implode($spacer, $this->allowed);
     }
