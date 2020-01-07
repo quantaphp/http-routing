@@ -4,46 +4,27 @@ declare(strict_types=1);
 
 namespace Quanta\Http;
 
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-final class RoutingResult implements RequestHandlerInterface
+final class RoutingResult implements MiddlewareInterface
 {
-    /**
-     * @var int
-     */
-    private const FOUND = 0;
-
-    /**
-     * @var int
-     */
-    private const NOT_FOUND = 1;
-
-    /**
-     * @var int
-     */
-    private const NOT_ALLOWED = 2;
-
-    /**
-     * @var int
-     */
-    private int $type;
-
     /**
      * @var \Psr\Http\Server\RequestHandlerInterface|null
      */
     private ?RequestHandlerInterface $handler;
 
     /**
-     * @var array<int, string>
-     */
-    private array $allowed;
-
-    /**
      * @var array<string, mixed>
      */
     private array $attributes;
+
+    /**
+     * @var array<int, string>
+     */
+    private array $allowed;
 
     /**
      * @param \Psr\Http\Server\RequestHandlerInterface  $handler
@@ -52,7 +33,7 @@ final class RoutingResult implements RequestHandlerInterface
      */
     public static function found(RequestHandlerInterface $handler, array $attributes = []): self
     {
-        return new self(self::FOUND, $handler, [], $attributes);
+        return new self($handler, $attributes);
     }
 
     /**
@@ -60,7 +41,7 @@ final class RoutingResult implements RequestHandlerInterface
      */
     public static function notFound(): self
     {
-        return new self(self::NOT_FOUND);
+        return new self;
     }
 
     /**
@@ -69,63 +50,51 @@ final class RoutingResult implements RequestHandlerInterface
      */
     public static function notAllowed(string ...$allowed): self
     {
-        return new self(self::NOT_ALLOWED, null, $allowed);
+        return new self(null, [], $allowed);
     }
 
     /**
-     * @param int                                           $type
      * @param \Psr\Http\Server\RequestHandlerInterface|null $handler
-     * @param array<int, string>                            $allowed
      * @param array<string, mixed>                          $attributes
+     * @param array<int, string>                            $allowed
      */
-    private function __construct(int $type, RequestHandlerInterface $handler = null, array $allowed = [], array $attributes = [])
+    private function __construct(RequestHandlerInterface $handler = null, array $attributes = [], array $allowed = [])
     {
-        $this->type = $type;
         $this->handler = $handler;
-        $this->allowed = $allowed;
         $this->attributes = $attributes;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNotFound(): bool
-    {
-        return $this->type == self::NOT_FOUND;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNotAllowed(): bool
-    {
-        return $this->type == self::NOT_ALLOWED;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function allowed(): array
-    {
-        return $this->allowed;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function attributes(): array
-    {
-        return $this->attributes;
+        $this->allowed = $allowed;
     }
 
     /**
      * @inheritdoc
      */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (is_null($this->handler)) {
-            throw new \LogicException;
-        }
+        return is_null($this->handler)
+            ? $this->failure($request, $handler)
+            : $this->success($request, $this->handler);
+    }
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param \Psr\Http\Server\RequestHandlerInterface $handler
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    private function failure(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $request = $request->withAttribute(RoutingFailure::class, new RoutingFailure($this->allowed));
+
+        return $handler->handle($request);
+    }
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param \Psr\Http\Server\RequestHandlerInterface $handler
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    private function success(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $request = $request->withAttribute(RouteAttributeMap::class, new RouteAttributeMap($this->attributes));
 
         foreach ($this->attributes as $name => $attribute) {
             $request = $request->withAttribute($name, $attribute);

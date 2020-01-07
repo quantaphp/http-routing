@@ -8,20 +8,21 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 
-final class RoutingMiddleware implements MiddlewareInterface
+final class NotFoundMiddleware implements MiddlewareInterface
 {
     /**
-     * @var \Quanta\Http\RouterInterface
+     * @var \Psr\Http\Message\ResponseFactoryInterface
      */
-    private RouterInterface $router;
+    private ResponseFactoryInterface $factory;
 
     /**
-     * @param \Quanta\Http\RouterInterface $router
+     * @param \Psr\Http\Message\ResponseFactoryInterface $factory
      */
-    public function __construct(RouterInterface $router)
+    public function __construct(ResponseFactoryInterface $factory)
     {
-        $this->router = $router;
+        $this->factory = $factory;
     }
 
     /**
@@ -29,6 +30,6 @@ final class RoutingMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $this->router->dispatch($request)->process($request, $handler);
+        return $this->factory->createResponse(404);
     }
 }
