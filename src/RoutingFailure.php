@@ -12,9 +12,9 @@ final class RoutingFailure
     private array $allowed;
 
     /**
-     * @param array<int, string> $allowed
+     * @param string ...$allowed
      */
-    public function __construct(array $allowed)
+    public function __construct(string ...$allowed)
     {
         $this->allowed = $allowed;
     }

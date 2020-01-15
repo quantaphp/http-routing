@@ -45,7 +45,7 @@ final class RoutingResult implements MiddlewareInterface
     }
 
     /**
-     * @var string ...$allowed
+     * @param string ...$allowed
      * @return \Quanta\Http\RoutingResult
      */
     public static function notAllowed(string ...$allowed): self
@@ -82,7 +82,7 @@ final class RoutingResult implements MiddlewareInterface
      */
     private function failure(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $request = $request->withAttribute(RoutingFailure::class, new RoutingFailure($this->allowed));
+        $request = $request->withAttribute(RoutingFailure::class, new RoutingFailure(...$this->allowed));
 
         return $handler->handle($request);
     }

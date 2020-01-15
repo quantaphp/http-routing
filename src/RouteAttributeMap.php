@@ -14,7 +14,7 @@ final class RouteAttributeMap
     /**
      * @param array<string, mixed> $attributes
      */
-    public function __construct(array $attributes)
+    public function __construct(array $attributes = [])
     {
         $this->attributes = $attributes;
     }
@@ -34,6 +34,6 @@ final class RouteAttributeMap
      */
     public function get(string $name, $default = null)
     {
-        return $this->attributes[$name] ?? null;
+        return $this->attributes[$name] ?? $default;
     }
 }
