@@ -15,11 +15,9 @@ describe('RoutingFailure', function () {
         describe('->hasAllowedMethods()', function () {
 
             it('should be falsy', function () {
-
                 $test = $this->failure->hasAllowedMethods();
 
                 expect($test)->toBeFalsy();
-
             });
 
         });
@@ -29,11 +27,9 @@ describe('RoutingFailure', function () {
             context('when no spacer is given', function () {
 
                 it('should return an empty string', function () {
-
                     $test = $this->failure->allowedHeaderValue();
 
                     expect($test)->toEqual('');
-
                 });
 
             });
@@ -41,11 +37,9 @@ describe('RoutingFailure', function () {
             context('when a spacer is given', function () {
 
                 it('should return an empty string', function () {
-
                     $test = $this->failure->allowedHeaderValue(' - ');
 
                     expect($test)->toEqual('');
-
                 });
 
             });
@@ -63,11 +57,9 @@ describe('RoutingFailure', function () {
         describe('->hasAllowedMethods()', function () {
 
             it('should be truthy', function () {
-
                 $test = $this->failure->hasAllowedMethods();
 
                 expect($test)->toBeTruthy();
-
             });
 
         });
@@ -77,11 +69,9 @@ describe('RoutingFailure', function () {
             context('when no spacer is given', function () {
 
                 it('should use , as a spacer', function () {
-
                     $test = $this->failure->allowedHeaderValue();
 
                     expect($test)->toEqual('GET, POST');
-
                 });
 
             });
@@ -89,11 +79,9 @@ describe('RoutingFailure', function () {
             context('when a spacer is given', function () {
 
                 it('should use the given spacer', function () {
-
                     $test = $this->failure->allowedHeaderValue(' - ');
 
                     expect($test)->toEqual('GET - POST');
-
                 });
 
             });

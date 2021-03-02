@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use function Eloquent\Phony\Kahlan\mock;
 
-use Psr\Http\Message\UriInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 use FastRoute\Dispatcher;
+use Laminas\Diactoros\Uri;
+use Laminas\Diactoros\ServerRequest;
 
 use Quanta\Http\RoutingResult;
 use Quanta\Http\RouterInterface;
@@ -23,22 +23,15 @@ describe('FastRouteRouter', function () {
     });
 
     it('should implement RouterInterface', function () {
-
         expect($this->router)->toBeAnInstanceOf(RouterInterface::class);
-
     });
 
     describe('->dispatch()', function () {
 
         beforeEach(function () {
-            $uri = mock(UriInterface::class);
-
-            $uri->getPath->returns('test');
-
-            $this->request = mock(ServerRequestInterface::class);
-
-            $this->request->getMethod->returns('GET');
-            $this->request->getUri->returns($uri);
+            $this->request = (new ServerRequest)
+                ->withMethod('GET')
+                ->withUri(new Uri('test'));
         });
 
         context('when the value returned by the dispatcher is NOT_FOUND', function () {
@@ -48,7 +41,7 @@ describe('FastRouteRouter', function () {
                     ->with('GET', 'test')
                     ->returns([Dispatcher::NOT_FOUND]);
 
-                $test = $this->router->dispatch($this->request->get());
+                $test = $this->router->dispatch($this->request);
 
                 expect($test)->toEqual(RoutingResult::notFound());
             });
@@ -62,7 +55,7 @@ describe('FastRouteRouter', function () {
                     ->with('GET', 'test')
                     ->returns([Dispatcher::METHOD_NOT_ALLOWED, ['POST', 'PUT']]);
 
-                $test = $this->router->dispatch($this->request->get());
+                $test = $this->router->dispatch($this->request);
 
                 expect($test)->toEqual(RoutingResult::notAllowed('POST', 'PUT'));
             });
@@ -82,7 +75,7 @@ describe('FastRouteRouter', function () {
                         ->with('GET', 'test')
                         ->returns([Dispatcher::FOUND, $handler->get(), $attributes]);
 
-                    $test = $this->router->dispatch($this->request->get());
+                    $test = $this->router->dispatch($this->request);
 
                     expect($test)->toEqual(RoutingResult::found($handler->get(), $attributes));
                 });
@@ -98,7 +91,7 @@ describe('FastRouteRouter', function () {
                         ->with('GET', 'test')
                         ->returns([Dispatcher::FOUND, 'handler', $attributes]);
 
-                    $test = fn () => $this->router->dispatch($this->request->get());
+                    $test = fn () => $this->router->dispatch($this->request);
 
                     expect($test)->toThrow(new UnexpectedValueException);
                 });

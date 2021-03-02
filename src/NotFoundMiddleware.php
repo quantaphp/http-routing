@@ -30,6 +30,24 @@ final class NotFoundMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $this->factory->createResponse(404);
+        $failure = $request->getAttribute(RoutingFailure::class);
+
+        if (is_null($failure)) {
+            return $handler->handle($request);
+        }
+
+        if (!$failure instanceof RoutingFailure) {
+            throw new \UnexpectedValueException(
+                vsprintf('The %s request attribute must be an instance of %s, %s given', [
+                    RoutingFailure::class,
+                    RoutingFailure::class,
+                    gettype($failure),
+                ])
+            );
+        }
+
+        return !$failure->hasAllowedMethods()
+            ? $this->factory->createResponse(404)
+            : $handler->handle($request);
     }
 }

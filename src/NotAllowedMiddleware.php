@@ -32,7 +32,21 @@ final class NotAllowedMiddleware implements MiddlewareInterface
     {
         $failure = $request->getAttribute(RoutingFailure::class);
 
-        return $failure instanceof RoutingFailure && $failure->hasAllowedMethods()
+        if (is_null($failure)) {
+            return $handler->handle($request);
+        }
+
+        if (!$failure instanceof RoutingFailure) {
+            throw new \UnexpectedValueException(
+                vsprintf('The %s request attribute must be an instance of %s, %s given', [
+                    RoutingFailure::class,
+                    RoutingFailure::class,
+                    gettype($failure),
+                ])
+            );
+        }
+
+        return $failure->hasAllowedMethods()
             ? $this->factory->createResponse(405)->withHeader('Allow', $failure->allowedHeaderValue())
             : $handler->handle($request);
     }

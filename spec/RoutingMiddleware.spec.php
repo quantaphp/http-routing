@@ -6,8 +6,9 @@ use function Eloquent\Phony\Kahlan\mock;
 
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+
+use Laminas\Diactoros\Response;
+use Laminas\Diactoros\ServerRequest;
 
 use Quanta\Http\RoutingResult;
 use Quanta\Http\RoutingFailure;
@@ -24,84 +25,27 @@ describe('RoutingMiddleware', function () {
     });
 
     it('should implement MiddlewareInterface', function () {
-
         expect($this->middleware)->toBeAnInstanceOf(MiddlewareInterface::class);
-
     });
 
     describe('->process()', function () {
 
-        beforeEach(function () {
-            $this->request = mock(ServerRequestInterface::class);
-            $this->handler = mock(RequestHandlerInterface::class);
-        });
+        it('should return the response produced by the routing result with the given request handler', function () {
+            $request = new ServerRequest;
+            $response = new Response;
+            $handler = mock(RequestHandlerInterface::class);
 
-        context('when the result is found', function () {
+            $mock = new ServerRequest;
 
-            it('should return the response produced by the routing result', function () {
+            $result = RoutingResult::mock($mock);
 
-                $request1 = mock(ServerRequestInterface::class);
-                $request2 = mock(ServerRequestInterface::class);
-                $request3 = mock(ServerRequestInterface::class);
-                $request4 = mock(ServerRequestInterface::class);
-                $response = mock(ResponseInterface::class);
-                $handler = mock(RequestHandlerInterface::class);
+            $this->router->dispatch->with($request)->returns($result);
 
-                $result = RoutingResult::found($handler->get(), [
-                    'id1' => 'value1',
-                    'id2' => 'value2',
-                    'id3' => 'value3',
-                ]);
+            $handler->handle->with($mock)->returns($response);
 
-                $attributes = new RouteAttributeMap([
-                    'id1' => 'value1',
-                    'id2' => 'value2',
-                    'id3' => 'value3',
-                ]);
+            $test = $this->middleware->process($request, $handler->get());
 
-                $this->request->withAttribute
-                    ->with(RouteAttributeMap::class, $attributes)
-                    ->returns($request1);
-
-                $request1->withAttribute->with('id1', 'value1')->returns($request2);
-                $request2->withAttribute->with('id2', 'value2')->returns($request3);
-                $request3->withAttribute->with('id3', 'value3')->returns($request4);
-
-                $this->router->dispatch->with($this->request)->returns($result);
-
-                $handler->handle->with($request4)->returns($response);
-
-                $test = $this->middleware->process($this->request->get(), $this->handler->get());
-
-                expect($test)->toBe($response->get());
-
-            });
-
-        });
-
-        context('when the result is not found', function () {
-
-            it('should return the response produced by the routing result with the given request handler', function () {
-
-                $request = mock(ServerRequestInterface::class);
-                $response = mock(ResponseInterface::class);
-
-                $result = RoutingResult::notFound();
-
-                $this->request->withAttribute
-                    ->with(RoutingFailure::class, new RoutingFailure)
-                    ->returns($request);
-
-                $this->router->dispatch->with($this->request)->returns($result);
-
-                $this->handler->handle->with($request)->returns($response);
-
-                $test = $this->middleware->process($this->request->get(), $this->handler->get());
-
-                expect($test)->toBe($response->get());
-
-            });
-
+            expect($test)->toBe($response);
         });
 
     });

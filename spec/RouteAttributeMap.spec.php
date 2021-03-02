@@ -15,11 +15,9 @@ describe('RouteAttributeMap', function () {
         describe('->all()', function () {
 
             it('should return an empty array', function () {
-
                 $test = $this->map->all();
 
                 expect($test)->toEqual([]);
-
             });
 
         });
@@ -29,11 +27,9 @@ describe('RouteAttributeMap', function () {
             context('when no default value is given', function () {
 
                 it('should return null', function () {
-
                     $test = $this->map->get('key');
 
                     expect($test)->toBeNull();
-
                 });
 
             });
@@ -41,11 +37,9 @@ describe('RouteAttributeMap', function () {
             context('when a default value is given', function () {
 
                 it('should return the given default value', function () {
-
                     $test = $this->map->get('key', 'default');
 
                     expect($test)->toEqual('default');
-
                 });
 
             });
@@ -63,11 +57,9 @@ describe('RouteAttributeMap', function () {
         describe('->all()', function () {
 
             it('should return the matched route attribute map', function () {
-
                 $test = $this->map->all();
 
                 expect($test)->toEqual(['id1' => 'value1', 'id2' => 'value2', 'id3' => 'value3']);
-
             });
 
         });
@@ -79,11 +71,9 @@ describe('RouteAttributeMap', function () {
                 context('when no default value is given', function () {
 
                     it('should return the associated value', function () {
-
                         $test = $this->map->get('id2');
 
                         expect($test)->toEqual('value2');
-
                     });
 
                 });
@@ -91,11 +81,9 @@ describe('RouteAttributeMap', function () {
                 context('when a default value is given', function () {
 
                     it('should return the associated value', function () {
-
                         $test = $this->map->get('id2');
 
                         expect($test)->toEqual('value2');
-
                     });
 
                 });
@@ -107,11 +95,9 @@ describe('RouteAttributeMap', function () {
                 context('when no default value is given', function () {
 
                     it('should return null', function () {
-
                         $test = $this->map->get('id4');
 
                         expect($test)->toBeNull();
-
                     });
 
                 });
@@ -119,11 +105,9 @@ describe('RouteAttributeMap', function () {
                 context('when a default value is given', function () {
 
                     it('should return the given default value', function () {
-
                         $test = $this->map->get('id4', 'default');
 
                         expect($test)->toEqual('default');
-
                     });
 
                 });

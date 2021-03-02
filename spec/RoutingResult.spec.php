@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use function Eloquent\Phony\Kahlan\mock;
 
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+
+use Laminas\Diactoros\Response;
+use Laminas\Diactoros\ServerRequest;
 
 use Quanta\Http\RoutingResult;
 use Quanta\Http\RoutingFailure;
@@ -16,8 +16,31 @@ use Quanta\Http\RouteAttributeMap;
 describe('RoutingResult', function () {
 
     beforeEach(function () {
-        $this->request = mock(ServerRequestInterface::class);
-        $this->handler = mock(RequestHandlerInterface::class);
+        $this->request = new ServerRequest;
+    });
+
+    context('when the result is a mock', function () {
+
+        beforeEach(function () {
+            $this->mock = new ServerRequest;
+
+            $this->result = RoutingResult::mock($this->mock);
+        });
+
+        it('should be an instance of RoutingResult', function () {
+            expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
+        });
+
+        describe('->request()', function () {
+
+            it('should return the mocked request', function () {
+                $test = $this->result->request($this->request);
+
+                expect($test)->toBe($this->mock);
+            });
+
+        });
+
     });
 
     context('when the result is not found', function () {
@@ -26,37 +49,18 @@ describe('RoutingResult', function () {
             $this->result = RoutingResult::notFound();
         });
 
-        it('should implements MiddlewareInterface', function () {
-
-            expect($this->result)->toBeAnInstanceOf(MiddlewareInterface::class);
-
-        });
-
         it('should be an instance of RoutingResult', function () {
-
             expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
-
         });
 
-        describe('->process()', function () {
+        describe('->request()', function () {
 
-            it('should return the response produced by the given request handler', function () {
+            it('should add a routing failure attribute to the request', function () {
+                $request = $this->request->withAttribute(RoutingFailure::class, new RoutingFailure);
 
-                $request = mock(ServerRequestInterface::class);
-                $response = mock(ResponseInterface::class);
+                $test = $this->result->request($this->request);
 
-                $failure = new RoutingFailure;
-
-                $this->request->withAttribute
-                    ->with(RoutingFailure::class, $failure)
-                    ->returns($request);
-
-                $this->handler->handle->with($request)->returns($response);
-
-                $test = $this->result->process($this->request->get(), $this->handler->get());
-
-                expect($test)->toBe($response->get());
-
+                expect($test)->toEqual($request);
             });
 
         });
@@ -71,37 +75,18 @@ describe('RoutingResult', function () {
                 $this->result = RoutingResult::notAllowed();
             });
 
-            it('should implements MiddlewareInterface', function () {
-
-                expect($this->result)->toBeAnInstanceOf(MiddlewareInterface::class);
-
-            });
-
             it('should be an instance of RoutingResult', function () {
-
                 expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
-
             });
 
-            describe('->process()', function () {
+            describe('->request()', function () {
 
-                it('should return the response produced by the given request handler', function () {
+                it('should add a routing failure attribute to the request', function () {
+                    $request = $this->request->withAttribute(RoutingFailure::class, new RoutingFailure);
 
-                    $request = mock(ServerRequestInterface::class);
-                    $response = mock(ResponseInterface::class);
+                    $test = $this->result->request($this->request);
 
-                    $failure = new RoutingFailure;
-
-                    $this->request->withAttribute
-                        ->with(RoutingFailure::class, $failure)
-                        ->returns($request);
-
-                    $this->handler->handle->with($request)->returns($response);
-
-                    $test = $this->result->process($this->request->get(), $this->handler->get());
-
-                    expect($test)->toBe($response->get());
-
+                    expect($test)->toEqual($request);
                 });
 
             });
@@ -114,37 +99,18 @@ describe('RoutingResult', function () {
                 $this->result = RoutingResult::notAllowed('GET', 'POST');
             });
 
-            it('should implements MiddlewareInterface', function () {
-
-                expect($this->result)->toBeAnInstanceOf(MiddlewareInterface::class);
-
-            });
-
             it('should be an instance of RoutingResult', function () {
-
                 expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
-
             });
 
-            describe('->process()', function () {
+            describe('->request()', function () {
 
-                it('should return the response produced by the given request handler', function () {
+                it('should add a routing failure attribute with the allowed methods to the request', function () {
+                    $request = $this->request->withAttribute(RoutingFailure::class, new RoutingFailure('GET', 'POST'));
 
-                    $request = mock(ServerRequestInterface::class);
-                    $response = mock(ResponseInterface::class);
+                    $test = $this->result->request($this->request);
 
-                    $failure = new RoutingFailure('GET', 'POST');
-
-                    $this->request->withAttribute
-                        ->with(RoutingFailure::class, $failure)
-                        ->returns($request);
-
-                    $this->handler->handle->with($request)->returns($response);
-
-                    $test = $this->result->process($this->request->get(), $this->handler->get());
-
-                    expect($test)->toBe($response->get());
-
+                    expect($test)->toEqual($request);
                 });
 
             });
@@ -165,37 +131,20 @@ describe('RoutingResult', function () {
                 $this->result = RoutingResult::found($this->matched->get());
             });
 
-            it('should implements MiddlewareInterface', function () {
-
-                expect($this->result)->toBeAnInstanceOf(MiddlewareInterface::class);
-
-            });
-
             it('should be an instance of RoutingResult', function () {
-
                 expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
-
             });
 
-            describe('->process()', function () {
+            describe('->request()', function () {
 
-                it('should return the response produced by the matched request handler', function () {
+                it('should add the matched request handler and an empty attribute map to the request', function () {
+                    $request = $this->request
+                        ->withAttribute(RequestHandlerInterface::class, $this->matched->get())
+                        ->withAttribute(RouteAttributeMap::class, new RouteAttributeMap);
 
-                    $request = mock(ServerRequestInterface::class);
-                    $response = mock(ResponseInterface::class);
+                    $test = $this->result->request($this->request);
 
-                    $attributes = new RouteAttributeMap;
-
-                    $this->request->withAttribute
-                        ->with(RouteAttributeMap::class, $attributes)
-                        ->returns($request);
-
-                    $this->matched->handle->with($request)->returns($response);
-
-                    $test = $this->result->process($this->request->get(), $this->handler->get());
-
-                    expect($test)->toBe($response->get());
-
+                    expect($test)->toEqual($request);
                 });
 
             });
@@ -212,48 +161,23 @@ describe('RoutingResult', function () {
                 ]);
             });
 
-            it('should implements MiddlewareInterface', function () {
-
-                expect($this->result)->toBeAnInstanceOf(MiddlewareInterface::class);
-
-            });
-
             it('should be an instance of RoutingResult', function () {
-
                 expect($this->result)->toBeAnInstanceOf(RoutingResult::class);
-
             });
 
-            describe('->process()', function () {
+            describe('->request()', function () {
 
-                it('should return the response produced by the matched request handler', function () {
+                it('should add the matched request handler, an attribute map and the attributes to the request', function () {
+                    $request = $this->request
+                        ->withAttribute(RequestHandlerInterface::class, $this->matched->get())
+                        ->withAttribute(RouteAttributeMap::class, new RouteAttributeMap(['id1' => 'value1', 'id2' => 'value2', 'id3' => 'value3']))
+                        ->withAttribute('id1', 'value1')
+                        ->withAttribute('id2', 'value2')
+                        ->withAttribute('id3', 'value3');
 
-                    $request1 = mock(ServerRequestInterface::class);
-                    $request2 = mock(ServerRequestInterface::class);
-                    $request3 = mock(ServerRequestInterface::class);
-                    $request4 = mock(ServerRequestInterface::class);
-                    $response = mock(ResponseInterface::class);
+                    $test = $this->result->request($this->request);
 
-                    $attributes = new RouteAttributeMap([
-                        'id1' => 'value1',
-                        'id2' => 'value2',
-                        'id3' => 'value3',
-                    ]);
-
-                    $this->request->withAttribute
-                        ->with(RouteAttributeMap::class, $attributes)
-                        ->returns($request1);
-
-                    $request1->withAttribute->with('id1', 'value1')->returns($request2);
-                    $request2->withAttribute->with('id2', 'value2')->returns($request3);
-                    $request3->withAttribute->with('id3', 'value3')->returns($request4);
-
-                    $this->matched->handle->with($request4)->returns($response);
-
-                    $test = $this->result->process($this->request->get(), $this->handler->get());
-
-                    expect($test)->toBe($response->get());
-
+                    expect($test)->toEqual($request);
                 });
 
             });
