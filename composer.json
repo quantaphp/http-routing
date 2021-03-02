@@ -33,6 +33,7 @@
     "require-dev": {
         "eloquent/phony-kahlan": "^4.0",
         "kahlan/kahlan": "^5.0",
+        "nikic/fast-route": "^1.3",
         "phpstan/phpstan": "^0.12.3"
     },
     "autoload": {
