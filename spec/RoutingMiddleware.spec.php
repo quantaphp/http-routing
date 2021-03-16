@@ -30,22 +30,51 @@ describe('RoutingMiddleware', function () {
 
     describe('->process()', function () {
 
-        it('should return the response produced by the routing result with the given request handler', function () {
-            $request = new ServerRequest;
-            $response = new Response;
-            $handler = mock(RequestHandlerInterface::class);
+        beforeEach(function () {
+            $this->request = new ServerRequest;
+            $this->handler = mock(RequestHandlerInterface::class);
+        });
 
-            $mock = new ServerRequest;
+        context('when the router throws an exception', function () {
 
-            $result = RoutingResult::mock($mock);
+            it('should wrap an Exception around the thrown exception', function () {
+                $exception = new Exception;
 
-            $this->router->dispatch->with($request)->returns($result);
+                $this->router->dispatch->with($this->request)->throws($exception);
 
-            $handler->handle->with($mock)->returns($response);
+                $test = fn () => $this->middleware->process($this->request, $this->handler->get());
 
-            $test = $this->middleware->process($request, $handler->get());
+                expect($test)->toThrow(new Exception);
 
-            expect($test)->toBe($response);
+                try {
+                    $test();
+                }
+
+                catch (\Throwable $e) {
+                    expect($e->getPrevious())->toBe($exception);
+                }
+            });
+
+        });
+
+        context('when the router does not throw an exception', function () {
+
+            it('should return the response produced by the routing result with the given request handler', function () {
+                $mock = new ServerRequest;
+
+                $response = new Response;
+
+                $result = RoutingResult::mock($mock);
+
+                $this->router->dispatch->with($this->request)->returns($result);
+
+                $this->handler->handle->with($mock)->returns($response);
+
+                $test = $this->middleware->process($this->request, $this->handler->get());
+
+                expect($test)->toBe($response);
+            });
+
         });
 
     });

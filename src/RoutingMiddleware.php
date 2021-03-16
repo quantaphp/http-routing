@@ -29,7 +29,15 @@ final class RoutingMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $request = $this->router->dispatch($request)->request($request);
+        try {
+            $result = $this->router->dispatch($request);
+        }
+
+        catch (\Throwable $e) {
+            throw new \Exception('Error while dispatching the request', 0, $e);
+        }
+
+        $request = $result->request($request);
 
         return $handler->handle($request);
     }
